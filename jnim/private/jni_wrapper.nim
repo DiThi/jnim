@@ -160,14 +160,14 @@ type
     PopLocalFrame*: proc(env: JNIEnvPtr, res: jobject): jobject {.jni.}
 
     NewGlobalRef*: proc(env: JNIEnvPtr, obj: jobject): jobject {.jni.}
-    DeleteGlobalRef*: proc(env: JNIEnvPtr, obj: jobject) {.jni.}
+    DeleteGlobalRef*: proc(env: JNIEnvPtr, obj: jobject) {.jni,raises:[].}
     DeleteLocalRef*: proc(env: JNIEnvPtr, obj: jobject) {.jni.}
     IsSameObject*: proc(env: JNIEnvPtr, obj1, obj2: jobject): jboolean {.jni.}
     NewLocalRef*: proc(env: JNIEnvPtr, obj: jobject): jobject {.jni.}
     EnsureLocalCapacity*: proc(env: JNIEnvPtr, capacity: jint): jint {.jni.}
 
     AllocObject*: proc(env: JNIEnvPtr, clazz: JClass): jobject {.jni.}
-    NewObject*: proc(env: JNIEnvPtr, clazz: JClass, methodID: jmethodID): jobject {.jni, varargs.}
+    NewObject*: pointer
     NewObjectV: pointer # This function utilizes va_list which is not needed in Nim
     NewObjectA*: proc(env: JNIEnvPtr, clazz: JClass, methodID: jmethodID, args: ptr jvalue): jobject {.jni.}
 
@@ -176,83 +176,83 @@ type
 
     GetMethodID*: proc(env: JNIEnvPtr, clazz: JClass, name, sig: cstring): jmethodID {.jni.}
 
-    CallObjectMethod*: proc(env: JNIEnvPtr, obj: jobject, methodID: jmethodID): jobject {.jni, varargs.}
+    CallObjectMethod*: pointer
     CallObjectMethodV: pointer # This function utilizes va_list which is not needed in Nim
     CallObjectMethodA*: proc(env: JNIEnvPtr, obj: jobject, methodID: jmethodID, args: ptr jvalue): jobject {.jni.}
 
-    CallBooleanMethod*: proc(env: JNIEnvPtr, obj: jobject, methodID: jmethodID): jboolean {.jni, varargs.}
+    CallBooleanMethod*: pointer
     CallBooleanMethodV: pointer # This function utilizes va_list which is not needed in Nim
     CallBooleanMethodA*: proc(env: JNIEnvPtr, obj: jobject, methodID: jmethodID, args: ptr jvalue): jboolean {.jni.}
 
-    CallByteMethod*: proc(env: JNIEnvPtr, obj: jobject, methodID: jmethodID): jbyte {.jni, varargs.}
+    CallByteMethod*: pointer
     CallByteMethodV: pointer # This function utilizes va_list which is not needed in Nim
     CallByteMethodA*: proc(env: JNIEnvPtr, obj: jobject, methodID: jmethodID, args: ptr jvalue): jbyte {.jni.}
 
-    CallCharMethod*: proc(env: JNIEnvPtr, obj: jobject, methodID: jmethodID): jchar {.jni, varargs.}
+    CallCharMethod*: pointer
     CallCharMethodV: pointer # This function utilizes va_list which is not needed in Nim
     CallCharMethodA*: proc(env: JNIEnvPtr, obj: jobject, methodID: jmethodID, args: ptr jvalue): jchar {.jni.}
 
-    CallShortMethod*: proc(env: JNIEnvPtr, obj: jobject, methodID: jmethodID): jshort {.jni, varargs.}
+    CallShortMethod*: pointer
     CallShortMethodV: pointer # This function utilizes va_list which is not needed in Nim
     CallShortMethodA*: proc(env: JNIEnvPtr, obj: jobject, methodID: jmethodID, args: ptr jvalue): jshort {.jni.}
 
-    CallIntMethod*: proc(env: JNIEnvPtr, obj: jobject, methodID: jmethodID): jint {.jni, varargs.}
+    CallIntMethod*: pointer
     CallIntMethodV: pointer # This function utilizes va_list which is not needed in Nim
     CallIntMethodA*: proc(env: JNIEnvPtr, obj: jobject, methodID: jmethodID, args: ptr jvalue): jint {.jni.}
 
-    CallLongMethod*: proc(env: JNIEnvPtr, obj: jobject, methodID: jmethodID): jlong {.jni, varargs.}
+    CallLongMethod*: pointer
     CallLongMethodV: pointer # This function utilizes va_list which is not needed in Nim
     CallLongMethodA*: proc(env: JNIEnvPtr, obj: jobject, methodID: jmethodID, args: ptr jvalue): jlong {.jni.}
 
-    CallFloatMethod*: proc(env: JNIEnvPtr, obj: jobject, methodID: jmethodID): jfloat {.jni, varargs.}
+    CallFloatMethod*: pointer
     CallFloatMethodV: pointer # This function utilizes va_list which is not needed in Nim
     CallFloatMethodA*: proc(env: JNIEnvPtr, obj: jobject, methodID: jmethodID, args: ptr jvalue): jfloat {.jni.}
 
-    CallDoubleMethod*: proc(env: JNIEnvPtr, obj: jobject, methodID: jmethodID): jdouble {.jni, varargs.}
+    CallDoubleMethod*: pointer
     CallDoubleMethodV: pointer # This function utilizes va_list which is not needed in Nim
     CallDoubleMethodA*: proc(env: JNIEnvPtr, obj: jobject, methodID: jmethodID, args: ptr jvalue): jdouble {.jni.}
 
-    CallVoidMethod*: proc(env: JNIEnvPtr, obj: jobject, methodID: jmethodID) {.jni, varargs.}
+    CallVoidMethod*: pointer
     CallVoidMethodV: pointer # This function utilizes va_list which is not needed in Nim
     CallVoidMethodA*: proc(env: JNIEnvPtr, obj: jobject, methodID: jmethodID, args: ptr jvalue) {.jni.}
 
-    CallNonvirtualObjectMethod*: proc(env: JNIEnvPtr, obj: jobject, clazz: JClass, methodID: jmethodID): jobject {.jni, varargs.}
+    CallNonvirtualObjectMethod*: pointer
     CallNonvirtualObjectMethodV: pointer # This function utilizes va_list which is not needed in Nim
     CallNonvirtualObjectMethodA*: proc(env: JNIEnvPtr, obj: jobject, clazz: JClass, methodID: jmethodID, args: ptr jvalue): jobject {.jni.}
 
-    CallNonvirtualBooleanMethod*: proc(env: JNIEnvPtr, obj: jobject, clazz: JClass, methodID: jmethodID): jboolean {.jni, varargs.}
+    CallNonvirtualBooleanMethod*: pointer
     CallNonvirtualBooleanMethodV: pointer # This function utilizes va_list which is not needed in Nim
     CallNonvirtualBooleanMethodA*: proc(env: JNIEnvPtr, obj: jobject, clazz: JClass, methodID: jmethodID, args: ptr jvalue): jboolean {.jni.}
 
-    CallNonvirtualByteMethod*: proc(env: JNIEnvPtr, obj: jobject, clazz: JClass, methodID: jmethodID): jbyte {.jni, varargs.}
+    CallNonvirtualByteMethod*: pointer
     CallNonvirtualByteMethodV: pointer # This function utilizes va_list which is not needed in Nim
     CallNonvirtualByteMethodA*: proc(env: JNIEnvPtr, obj: jobject, clazz: JClass, methodID: jmethodID, args: ptr jvalue): jbyte {.jni.}
 
-    CallNonvirtualCharMethod*: proc(env: JNIEnvPtr, obj: jobject, clazz: JClass, methodID: jmethodID): jchar {.jni, varargs.}
+    CallNonvirtualCharMethod*: pointer
     CallNonvirtualCharMethodV: pointer # This function utilizes va_list which is not needed in Nim
     CallNonvirtualCharMethodA*: proc(env: JNIEnvPtr, obj: jobject, clazz: JClass, methodID: jmethodID, args: ptr jvalue): jchar {.jni.}
 
-    CallNonvirtualShortMethod*: proc(env: JNIEnvPtr, obj: jobject, clazz: JClass, methodID: jmethodID): jshort {.jni, varargs.}
+    CallNonvirtualShortMethod*: pointer
     CallNonvirtualShortMethodV: pointer # This function utilizes va_list which is not needed in Nim
     CallNonvirtualShortMethodA*: proc(env: JNIEnvPtr, obj: jobject, clazz: JClass, methodID: jmethodID, args: ptr jvalue): jshort {.jni.}
 
-    CallNonvirtualIntMethod*: proc(env: JNIEnvPtr, obj: jobject, clazz: JClass, methodID: jmethodID): jint {.jni, varargs.}
+    CallNonvirtualIntMethod*: pointer
     CallNonvirtualIntMethodV: pointer # This function utilizes va_list which is not needed in Nim
     CallNonvirtualIntMethodA*: proc(env: JNIEnvPtr, obj: jobject, clazz: JClass, methodID: jmethodID, args: ptr jvalue): jint {.jni.}
 
-    CallNonvirtualLongMethod*: proc(env: JNIEnvPtr, obj: jobject, clazz: JClass, methodID: jmethodID): jlong {.jni, varargs.}
+    CallNonvirtualLongMethod*: pointer
     CallNonvirtualLongMethodV: pointer # This function utilizes va_list which is not needed in Nim
     CallNonvirtualLongMethodA*: proc(env: JNIEnvPtr, obj: jobject, clazz: JClass, methodID: jmethodID, args: ptr jvalue): jlong {.jni.}
 
-    CallNonvirtualFloatMethod*: proc(env: JNIEnvPtr, obj: jobject, clazz: JClass, methodID: jmethodID): jfloat {.jni, varargs.}
+    CallNonvirtualFloatMethod*: pointer
     CallNonvirtualFloatMethodV: pointer # This function utilizes va_list which is not needed in Nim
     CallNonvirtualFloatMethodA*: proc(env: JNIEnvPtr, obj: jobject, clazz: JClass, methodID: jmethodID, args: ptr jvalue): jfloat {.jni.}
 
-    CallNonvirtualDoubleMethod*: proc(env: JNIEnvPtr, obj: jobject, clazz: JClass, methodID: jmethodID): jdouble {.jni, varargs.}
+    CallNonvirtualDoubleMethod*: pointer
     CallNonvirtualDoubleMethodV: pointer # This function utilizes va_list which is not needed in Nim
     CallNonvirtualDoubleMethodA*: proc(env: JNIEnvPtr, obj: jobject, clazz: JClass, methodID: jmethodID, args: ptr jvalue): jdouble {.jni.}
 
-    CallNonvirtualVoidMethod*: proc(env: JNIEnvPtr, obj: jobject, clazz: JClass, methodID: jmethodID) {.jni, varargs.}
+    CallNonvirtualVoidMethod*: pointer
     CallNonvirtualVoidMethodV: pointer # This function utilizes va_list which is not needed in Nim
     CallNonvirtualVoidMethodA*: proc(env: JNIEnvPtr, obj: jobject, clazz: JClass, methodID: jmethodID, args: ptr jvalue) {.jni.}
 
@@ -280,43 +280,43 @@ type
 
     GetStaticMethodID*: proc(env: JNIEnvPtr, cls: JClass, name, sig: cstring): jmethodID {.jni.}
 
-    CallStaticObjectMethod*: proc(env: JNIEnvPtr, clazz: JClass, methodID: jmethodID): jobject {.jni, varargs.}
+    CallStaticObjectMethod*: pointer
     CallStaticObjectMethodV: pointer # This function utilizes va_list which is not needed in Nim
     CallStaticObjectMethodA*: proc(env: JNIEnvPtr, clazz: JClass, methodID: jmethodID, args: ptr jvalue): jobject {.jni.}
 
-    CallStaticBooleanMethod*: proc(env: JNIEnvPtr, clazz: JClass, methodID: jmethodID): jboolean {.jni, varargs.}
+    CallStaticBooleanMethod*: pointer
     CallStaticBooleanMethodV: pointer # This function utilizes va_list which is not needed in Nim
     CallStaticBooleanMethodA*: proc(env: JNIEnvPtr, clazz: JClass, methodID: jmethodID, args: ptr jvalue): jboolean {.jni.}
 
-    CallStaticByteMethod*: proc(env: JNIEnvPtr, clazz: JClass, methodID: jmethodID): jbyte {.jni, varargs.}
+    CallStaticByteMethod*: pointer
     CallStaticByteMethodV: pointer # This function utilizes va_list which is not needed in Nim
     CallStaticByteMethodA*: proc(env: JNIEnvPtr, clazz: JClass, methodID: jmethodID, args: ptr jvalue): jbyte {.jni.}
 
-    CallStaticCharMethod*: proc(env: JNIEnvPtr, clazz: JClass, methodID: jmethodID): jchar {.jni, varargs.}
+    CallStaticCharMethod*: pointer
     CallStaticCharMethodV: pointer # This function utilizes va_list which is not needed in Nim
     CallStaticCharMethodA*: proc(env: JNIEnvPtr, clazz: JClass, methodID: jmethodID, args: ptr jvalue): jchar {.jni.}
 
-    CallStaticShortMethod*: proc(env: JNIEnvPtr, clazz: JClass, methodID: jmethodID): jshort {.jni, varargs.}
+    CallStaticShortMethod*: pointer
     CallStaticShortMethodV: pointer # This function utilizes va_list which is not needed in Nim
     CallStaticShortMethodA*: proc(env: JNIEnvPtr, clazz: JClass, methodID: jmethodID, args: ptr jvalue): jshort {.jni.}
 
-    CallStaticIntMethod*: proc(env: JNIEnvPtr, clazz: JClass, methodID: jmethodID): jint {.jni, varargs.}
+    CallStaticIntMethod*: pointer
     CallStaticIntMethodV: pointer # This function utilizes va_list which is not needed in Nim
     CallStaticIntMethodA*: proc(env: JNIEnvPtr, clazz: JClass, methodID: jmethodID, args: ptr jvalue): jint {.jni.}
 
-    CallStaticLongMethod*: proc(env: JNIEnvPtr, clazz: JClass, methodID: jmethodID): jlong {.jni, varargs.}
+    CallStaticLongMethod*: pointer
     CallStaticLongMethodV: pointer # This function utilizes va_list which is not needed in Nim
     CallStaticLongMethodA*: proc(env: JNIEnvPtr, clazz: JClass, methodID: jmethodID, args: ptr jvalue): jlong {.jni.}
 
-    CallStaticFloatMethod*: proc(env: JNIEnvPtr, clazz: JClass, methodID: jmethodID): jfloat {.jni, varargs.}
+    CallStaticFloatMethod*: pointer
     CallStaticFloatMethodV: pointer # This function utilizes va_list which is not needed in Nim
     CallStaticFloatMethodA*: proc(env: JNIEnvPtr, clazz: JClass, methodID: jmethodID, args: ptr jvalue): jfloat {.jni.}
 
-    CallStaticDoubleMethod*: proc(env: JNIEnvPtr, clazz: JClass, methodID: jmethodID): jdouble {.jni, varargs.}
+    CallStaticDoubleMethod*: pointer
     CallStaticDoubleMethodV: pointer # This function utilizes va_list which is not needed in Nim
     CallStaticDoubleMethodA*: proc(env: JNIEnvPtr, clazz: JClass, methodID: jmethodID, args: ptr jvalue): jdouble {.jni.}
 
-    CallStaticVoidMethod*: proc(env: JNIEnvPtr, clazz: JClass, methodID: jmethodID) {.jni, varargs.}
+    CallStaticVoidMethod*: pointer
     CallStaticVoidMethodV: pointer # This function utilizes va_list which is not needed in Nim
     CallStaticVoidMethodA*: proc(env: JNIEnvPtr, clazz: JClass, methodID: jmethodID, args: ptr jvalue) {.jni.}
 
@@ -446,6 +446,8 @@ type
     JNILocalRefType
     JNIGlobalRefType
     JNIWeakGlobalRefType
+echo "offset of AttachCurrentThread ", offsetof(JNIInvokeInterface, AttachCurrentThread)
+echo "offset of GetEnv ", offsetof(JNIInvokeInterface, GetEnv)
 
 const
   JNI_VERSION_1_1* = 0x00010001.jint
@@ -559,6 +561,7 @@ template jniSig*(t: typedesc[jshort]): string = "S"
 template jniSig*(t: typedesc[jfloat]): string = "F"
 template jniSig*(t: typedesc[jdouble]): string = "D"
 template jniSig*(t: typedesc[string]): string = sigForClass"java.lang.String"
+template jniSig*(t: typedesc[JClass]): string = sigForClass"java.lang.Class"
 template jniSig*(t: typedesc[jobject]): string = sigForClass"java.lang.Object"
 template jniSig*(t: typedesc[void]): string = "V"
 proc elementTypeOfOpenArrayType[OpenArrayType](dummy: OpenArrayType = @[]): auto = dummy[0]
@@ -588,7 +591,8 @@ type
 proc unexpectedType() = discard # Used only for compilation errors
 
 proc callMethod*(e: JNIEnvPtr, T: typedesc, o: jobject, m: jmethodID, a: ptr jvalue): T {.inline.} =
-  when T is jobject: e.CallObjectMethodA(e, o, m, a)
+  when T is JClass: cast[JClass](e.CallObjectMethodA(e, o, m, a))
+  elif T is jobject: e.CallObjectMethodA(e, o, m, a)
   elif T is jchar: e.CallCharMethodA(e, o, m, a)
   elif T is jbyte: e.CallByteMethodA(e, o, m, a)
   elif T is jshort: e.CallShortMethodA(e, o, m, a)
@@ -604,7 +608,8 @@ proc callMethod*(e: JNIEnvPtr, T: typedesc, o: jobject, m: jmethodID, a: openarr
   e.callMethod(T, o, m, cast[ptr jvalue](a))
 
 proc callNonvirtualMethod*(e: JNIEnvPtr, T: typedesc, o: jobject, c: JClass, m: jmethodID, a: ptr jvalue): T {.inline.} =
-  when T is jobject: e.CallNonvirtualObjectMethodA(e, o, c, m, a)
+  when T is JClass: cast[JClass](e.CallNonvirtualObjectMethodA(e, o, c, m, a))
+  elif T is jobject: e.CallNonvirtualObjectMethodA(e, o, c, m, a)
   elif T is jchar: e.CallNonvirtualCharMethodA(e, o, c, m, a)
   elif T is jbyte: e.CallNonvirtualByteMethodA(e, o, c, m, a)
   elif T is jshort: e.CallNonvirtualShortMethodA(e, o, c, m, a)

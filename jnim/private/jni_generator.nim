@@ -364,8 +364,6 @@ proc mkNonVirtualParentType(cd: ClassDef): NimNode {.compileTime.} =
 proc mkTypedesc(cd: ClassDef): NimNode {.compileTime.} =
   result = newNimNode(nnkBracketExpr).add(ident"typedesc").add(cd.mkType)
 
-template toConstCString(e: string): cstring = static(cstring(e))
-
 proc generateClassDef(cd: ClassDef): NimNode {.compileTime.} =
   let className = ident(cd.name)
   let classNameEx = identEx(cd.isExported, cd.name)
@@ -386,7 +384,7 @@ proc generateClassDef(cd: ClassDef): NimNode {.compileTime.} =
     proc `jniSigIdent`(t: typedesc[`className`]): string {.used, inline.} = sigForClass(`jName`)
     proc `jniSigIdent`(t: typedesc[openarray[`className`]]): string {.used, inline.} = "[" & sigForClass(`jName`)
     proc `getClassId`(t: typedesc[`className`]): JVMClass {.used, inline.} =
-      JVMClass.getByFqcn(toConstCString(fqcn(`jName`)))
+      JVMClass.getByFqcn(static(cstring(fqcn(`jName`))))
     proc toJVMObject(v: `className`): JVMObject {.used, inline.} =
       v.JVMObject
     proc `eqOpIdent`(v1, v2: `className`): bool {.used, inline.} =
@@ -423,22 +421,6 @@ proc fillGenericParameters(cd: ClassDef, pd: ProcDef, n: NimNode) {.compileTime.
   # Combines generic parameters from `pd`, `cd` and puts t into proc definition `n`
   n[2] = mkGenericParams(collectGenericParameters(cd, pd))
 
-template withGCDisabled(body: untyped) =
-  # Disabling GC is a must on Android (and maybe other platforms) in release
-  # mode. Otherwise Nim GC may kick in and finalize the JVMObject we're passing
-  # to JNI call before the actual JNI call is made. That is likely caused
-  # by release optimizations that prevent Nim GC from "seeing" the JVMObjects
-  # on the stack after their last usage, even though from the code POV they
-  # are still here. This template should be used wherever jni references are
-  # taken from temporary Nim objects.
-
-  when defined(gcDestructors):
-    body
-  else:
-    GC_disable()
-    body
-    GC_enable()
-
 proc generateConstructor(cd: ClassDef, pd: ProcDef, def: NimNode): NimNode =
   assert pd.isConstructor
 
@@ -457,10 +439,9 @@ proc generateConstructor(cd: ClassDef, pd: ProcDef, def: NimNode): NimNode =
   let args = generateArgs(pd, ai)
   result.body = quote do:
     checkInit
-    withGCDisabled:
-      let clazz = JVMClass.getByName(`cname`)
-      `args`
-    fromJObjectConsumingLocalRef(`ctypeWithParams`, newObjectRaw(clazz, toConstCString(`sig`), `ai`))
+    let clazz = JVMClass.getByName(`cname`)
+    `args`
+    fromJObjectConsumingLocalRef(`ctypeWithParams`, newObjectRaw(clazz, static(cstring(`sig`)), `ai`))
 
 proc generateMethod(cd: ClassDef, pd: ProcDef, def: NimNode): NimNode =
   assert(not (pd.isConstructor or pd.isProp))
@@ -482,29 +463,28 @@ proc generateMethod(cd: ClassDef, pd: ProcDef, def: NimNode): NimNode =
     objToCallIdent = ident"clazz"
     objToCall = quote do:
       let `objToCallIdent` = `ctype`.getJVMClassForType
-      let `mIdIdent` = `objToCallIdent`.getStaticMethodId(`pname`, toConstCString(`sig`))
+      let `mIdIdent` = `objToCallIdent`.getStaticMethodId(`pname`, static(cstring(`sig`)))
 
   else:
     objToCallIdent = ident"this"
     result.params.insert(1, newIdentDefs(objToCallIdent, cd.mkType))
     objToCall = quote do:
-      let `mIdIdent` = `objToCallIdent`.getMethodId(`pname`, toConstCString(`sig`))
+      let `mIdIdent` = `objToCallIdent`.getMethodId(`pname`, static(cstring(`sig`)))
 
   let retType = parseExpr(pd.retType)
   let ai = ident"args"
   let args = generateArgs(pd, ai)
   result.body = quote do:
-    withGCDisabled:
-      `objToCall`
-      `args`
+    `objToCall`
+    `args`
     callMethod(`retType`, `objToCallIdent`, `mIdIdent`, `ai`)
 
 proc getSuperclass(o: jobject): JVMClass =
-  let clazz = theEnv.GetObjectClass(theEnv, o)
-  let sclazz = theEnv.GetSuperclass(theEnv, clazz)
+  let clazz = cast[JNIEnvPtr](theEnv).GetObjectClass(cast[JNIEnvPtr](theEnv), o)
+  let sclazz = cast[JNIEnvPtr](theEnv).GetSuperclass(cast[JNIEnvPtr](theEnv), clazz)
   result = newJVMClass(sclazz)
-  theEnv.deleteLocalRef(clazz)
-  theEnv.deleteLocalRef(sclazz)
+  cast[JNIEnvPtr](theEnv).deleteLocalRef(clazz)
+  cast[JNIEnvPtr](theEnv).deleteLocalRef(sclazz)
 
 proc generateNonVirtualMethod(cd: ClassDef, pd: ProcDef, def: NimNode): NimNode =
   assert(not (pd.isConstructor or pd.isProp))
@@ -523,17 +503,17 @@ proc generateNonVirtualMethod(cd: ClassDef, pd: ProcDef, def: NimNode): NimNode 
   # Add first parameter
   let thisIdent = ident"this"
   result.params.insert(1, newIdentDefs(thisIdent, cd.mkNonVirtualType))
+  let getSuperclass = bindSym "getSuperclass"
   let objToCall = quote do:
-    let `mClassIdent` = getSuperclass(`thisIdent`.obj)
-    let `mIdIdent` = `mClassIdent`.getMethodId(`pname`, toConstCString(`sig`))
+    let `mClassIdent` = `getSuperclass`(`thisIdent`.obj)
+    let `mIdIdent` = `mClassIdent`.getMethodId(`pname`, static(cstring(`sig`)))
 
   let retType = parseExpr(pd.retType)
   let ai = ident"args"
   let args = generateArgs(pd, ai)
   result.body = quote do:
-    withGCDisabled:
-      `objToCall`
-      `args`
+    `objToCall`
+    `args`
     callNonVirtualMethod(`retType`, `thisIdent`, `mClassIdent`, `mIdIdent`, `ai`)
 
 proc generateProperty(cd: ClassDef, pd: ProcDef, def: NimNode, isSetter: bool): NimNode =

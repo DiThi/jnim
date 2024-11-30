@@ -12,7 +12,7 @@ var
   classCursor {.compileTime.} = 0
   importCursor {.compileTime.} = 0
 
-proc initGlueIfNeeded() =
+proc initGlueIfNeeded() {.compileTime.} =
   if classCursor == 0:
     javaGlue = "package " & jnimPackageName & ";\n"
     importCursor = javaGlue.len

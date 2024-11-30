@@ -14,7 +14,7 @@ var initArgs: JavaVMInitArgs
 
 # Options for another threads
 var theVM: JavaVMPtr
-var theEnv* {.threadVar}: JNIEnvPtr
+var theEnv* {.threadVar.}: JNIEnvPtr
 var findClassOverride* {.threadVar.}: proc(env: JNIEnvPtr, name: cstring): JClass {.gcsafe.}
 
 proc initJNIThread* {.gcsafe.}
@@ -120,8 +120,9 @@ template newGlobalRef*[T : jobject](env: JNIEnvPtr, r: T): T =
 type
   JVMMethodID* = distinct jmethodID
   JVMFieldID* = distinct jfieldID
-  JVMClass* = ref object
+  JVMClassObj = object
     cls: JClass
+  JVMClass* = ref JVMClassObj
   JVMObjectObj {.inheritable.} = object
     obj: jobject
   JVMObject* = ref JVMObjectObj
@@ -185,13 +186,13 @@ template get*(id: JVMFieldID): jfieldID = jfieldID(id)
 
 ####################################################################################################
 # JVMClass type
-proc freeClass(c: JVMClass) =
+proc `=destroy`*(c: var JVMClassObj) =
   if theEnv != nil:
     theEnv.deleteGlobalRef(c.cls)
 
 proc newJVMClass*(c: JClass): JVMClass =
   assert(cast[pointer](c) != nil)
-  result.new(freeClass)
+  result.new()
   result.cls = theEnv.newGlobalRef(c)
 
 proc findClass*(env: JNIEnvPtr, name: cstring): JClass =
@@ -392,18 +393,19 @@ proc toStringRaw(o: JVMObject): string =
 ####################################################################################################
 # Arrays support
 
-type JVMArray[T] = ref object
+type JVMArrayObj[T] = object
   arr: jtypedArray[T]
+type JVMArray[T] = ref JVMArrayObj[T]
 
 proc get*[T](arr: JVMArray[T]): jtypedArray[T] = arr.arr
 proc jniSig*[T](t: typedesc[JVMArray[T]]): string = "[" & jniSig(T)
-proc freeJVMArray[T](a: JVMArray[T]) =
+proc `=destroy`[T](a: var JVMArrayObj[T]) =
   if a.arr != nil and theEnv != nil:
     theEnv.deleteGlobalRef(a.arr)
 
 proc newArray*(T: typedesc, len: int): JVMArray[T] =
   checkInit
-  new(result, freeJVMArray[T])
+  new(result)
   let j = callVM theEnv.newArray(T, len.jsize)
   result.arr = theEnv.newGlobalRef(j)
   theEnv.deleteLocalRef(j)
@@ -425,7 +427,7 @@ template genArrayType(typ, arrTyp: typedesc, typName: untyped): untyped =
 
     proc `newJVM typName Array`*(len: jsize, cls = JVMClass.getByName("java.lang.Object")): JVMArray[typ] =
       checkInit
-      new(result, freeJVMArray[jobject])
+      new(result)
       let j = callVM theEnv.NewObjectArray(theEnv, len, cls.get, nil)
       result.arr = theEnv.newGlobalRef(j)
       theEnv.deleteLocalRef(j)
@@ -438,7 +440,7 @@ template genArrayType(typ, arrTyp: typedesc, typName: untyped): untyped =
 
   proc `newJVM typName Array`*(arr: jobject): JVMArray[typ] =
     checkInit
-    new(result, freeJVMArray[typ])
+    new(result)
     result.arr = theEnv.newGlobalRef(arr).`arrTyp`
 
   proc `newJVM typName Array`*(arr: JVMObject): JVMArray[typ] =

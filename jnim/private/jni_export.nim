@@ -154,7 +154,7 @@ private native void """ & InitializerName & """();
 
 var dexGlue {.compileTime.}: seq[string]
 
-proc genDexGlue(className, parentClass: string, interfaces: seq[string], isPublic: bool, methodDefs: seq[MethodDescr], staticSection, emitSection: string) =
+proc genDexGlue(className, parentClass: string, interfaces: seq[string], isPublic: bool, methodDefs: seq[MethodDescr], staticSection, emitSection: string) {.compileTime.} =
   # NOTE: as of Nim 1.0.2, some stdlib packages used by dali are broken at
   # compile time (see e.g.: https://github.com/nim-lang/Nim/issues/14339), so
   # we must use a workaround of writing an external file and compiling it
@@ -459,7 +459,7 @@ proc implementConstructor(p: NimNode, className, classSig: string, sig: NimNode)
 
     let inst = `iClazz`.newObjectRaw(`sig`, `args`)
     when compiles(result.data):
-      let data = cast[type(result.data)](getNimDataFromJObject(theEnv, inst))
+      let data = cast[type(result.data)](getNimDataFromJObject(cast[JNIEnvPtr](theEnv), inst))
     result = fromJObjectConsumingLocalRef(`classIdent`, inst)
     when compiles(result.data):
       result.data = data
@@ -490,11 +490,11 @@ registerNativeMethods(static(jnimPackageName.replace(".", "/") & "/Jnim"), nativ
 
 proc registerNativeMethods*() =
   for i in 0 .. nativeMethodDescs.high:
-    let cl = theEnv.findClass(nativeMethodDescs[i].classSig)
+    let cl = cast[JNIEnvPtr](theEnv).findClass(nativeMethodDescs[i].classSig)
     if not cl.isNil:
-      let r = callVM theEnv.RegisterNatives(theEnv, cl, unsafeAddr nativeMethodDescs[i].nativeMethods[0], nativeMethodDescs[i].nativeMethods.len.jint)
+      let r = callVM cast[JNIEnvPtr](theEnv).RegisterNatives(cast[JNIEnvPtr](theEnv), cl, unsafeAddr nativeMethodDescs[i].nativeMethods[0], nativeMethodDescs[i].nativeMethods.len.jint)
       assert(r == 0)
-      theEnv.deleteLocalRef(cl)
+      cast[JNIEnvPtr](theEnv).deleteLocalRef(cl)
   nativeMethodDescs = @[]
 
 macro jexport*(a: varargs[untyped]): untyped =
@@ -613,7 +613,7 @@ macro jexport*(a: varargs[untyped]): untyped =
         let noinlineProc = newProc(noinlineIdent, thunkParams)
         noinlineProc.addPragma(newIdentNode("nimcall"))
         noinlineProc.body = quote do:
-          let `thisRef` = theEnv.jniObjectToNimObj(this, type(`classNameIdent`))
+          let `thisRef` = cast[JNIEnvPtr](theEnv).jniObjectToNimObj(this, type(`classNameIdent`))
           `thunkCall`
 
         let thunk = newProc(thunkName, thunkParams)
